@@ -1,15 +1,15 @@
 set(HEADER_DIR ${LIBBINARYIO_ROOT}/include/binaryio)
-set(PUBLIC_HEADERS	${HEADER_DIR}/binaryreader.hpp
-					${HEADER_DIR}/binarywriter.hpp
-					${HEADER_DIR}/util.hpp)
+set(PUBLIC_HEADERS ${HEADER_DIR}/binaryreader.hpp
+                   ${HEADER_DIR}/binarywriter.hpp
+                   ${HEADER_DIR}/util.hpp)
 
-file(GLOB_RECURSE SRC_FILES
-	"*.hpp"
-	"*.cpp"
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+    "*.hpp"
+    "*.cpp"
 )
 
-add_library(libbinaryio STATIC	${SRC_FILES}
-								${PUBLIC_HEADERS})
+add_library(libbinaryio STATIC ${SRC_FILES}
+                               ${PUBLIC_HEADERS})
 
 set_property(TARGET libbinaryio PROPERTY CXX_STANDARD 17)
 set_property(TARGET libbinaryio PROPERTY PREFIX "")
