@@ -112,7 +112,7 @@ namespace binaryio
 		}
 
 		void Align();
-		void Align(uint_fast8_t byteAlignment);
+		void Align(size_t byteAlignment);
 
 		uint64_t ReadPointer();
 		void SkipPointer();

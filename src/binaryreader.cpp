@@ -23,7 +23,7 @@ void BinaryReader::Align()
 	Align(m_64BitMode ? 8 : 4);
 }
 
-void BinaryReader::Align(uint_fast8_t byteAlignment)
+void BinaryReader::Align(size_t byteAlignment)
 {
 	m_offset = binaryio::Align(m_offset, byteAlignment);
 }
