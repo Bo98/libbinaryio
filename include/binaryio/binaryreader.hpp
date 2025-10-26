@@ -23,7 +23,7 @@ namespace binaryio
 		template<typename T>
 		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>, T> Read()
 		{
-			const auto data = m_buffer->begin() + m_offset;
+			const auto data = m_buffer->begin() + EffectiveOffset();
 			uintmax_t result = 0;
 
 			for (auto i = 0U; i < sizeof(T); i++)
@@ -53,7 +53,7 @@ namespace binaryio
 			if (sizeof(R) == 1)
 			{
 				// Faster read.
-				std::copy(m_buffer->begin() + m_offset, m_buffer->begin() + m_offset + size, result);
+				std::copy(m_buffer->begin() + EffectiveOffset(), m_buffer->begin() + EffectiveOffset() + size, result);
 				Seek(static_cast<off_t>(size), std::ios::cur);
 			}
 			else
@@ -111,6 +111,12 @@ namespace binaryio
 			return m_offset;
 		}
 
+		void StashOffset()
+		{
+			m_stashedOffset += m_offset;
+			m_offset = 0;
+		}
+
 		void Align();
 		void Align(size_t byteAlignment);
 
@@ -148,9 +154,15 @@ namespace binaryio
 #endif
 		}
 
+		off_t EffectiveOffset()
+		{
+			return m_stashedOffset + m_offset;
+		}
+
 		std::shared_ptr<std::vector<uint8_t>> m_buffer;
 		bool m_bigEndian;
 		bool m_64BitMode;
 		off_t m_offset;
+		off_t m_stashedOffset;
 	};
 }

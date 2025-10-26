@@ -8,12 +8,15 @@ BinaryReader::BinaryReader(std::shared_ptr<std::vector<uint8_t>> buffer, bool bi
 	m_bigEndian = bigEndian;
 	m_64BitMode = false;
 	m_offset = 0;
+	m_stashedOffset = 0;
 }
 
 BinaryReader BinaryReader::Copy() const
 {
 	auto fileStream = BinaryReader(m_buffer, m_bigEndian);
 	fileStream.Set64BitMode(m_64BitMode);
+	fileStream.Seek(m_stashedOffset);
+	fileStream.StashOffset();
 	fileStream.Seek(m_offset);
 	return fileStream;
 }
@@ -62,7 +65,7 @@ std::string BinaryReader::ReadString()
 
 std::string BinaryReader::ReadString(size_t size)
 {
-	std::string result(m_buffer->begin() + m_offset, m_buffer->begin() + m_offset + size);
+	std::string result(m_buffer->begin() + EffectiveOffset(), m_buffer->begin() + EffectiveOffset() + size);
 	Seek(static_cast<off_t>(size), std::ios::cur);
 	return result;
 }
