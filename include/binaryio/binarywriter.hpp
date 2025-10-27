@@ -76,7 +76,7 @@ namespace binaryio
 		}
 
 		template<typename T>
-		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || std::is_constructible_v<T, const std::string &>> VisitAndWrite(off_t &offset, T value)
+		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || std::is_constructible_v<T, const std::string &>> VisitAndWrite(size_t &offset, T value)
 		{
 			const auto prevPos = GetOffset();
 			Seek(offset);
@@ -125,15 +125,20 @@ namespace binaryio
 			m_pushedDeferredWrites.pop();
 		}
 
-		void Seek(off_t offset, std::ios::seekdir seekdir = std::ios::beg)
+		void Seek(size_t offset)
+		{
+			Seek(static_cast<std::streamoff>(offset), std::ios::beg);
+		}
+
+		void Seek(std::streamoff offset, std::ios::seekdir seekdir)
 		{
 			auto absoluteOffset = offset;
 			if (seekdir == std::ios::cur)
 				absoluteOffset += GetOffset();
 			else if (seekdir == std::ios::end)
-				absoluteOffset += static_cast<off_t>(GetSize());
+				absoluteOffset += GetSize();
 
-			if (absoluteOffset > static_cast<off_t>(GetSize()))
+			if (absoluteOffset > GetSize())
 			{
 				m_outStream.seekp(0, std::ios::end);
 				const auto extensionSize = absoluteOffset - GetSize();
@@ -149,14 +154,14 @@ namespace binaryio
 			assert(!m_outStream.fail());
 		}
 
-		void Align(uint_fast8_t alignment)
+		void Align(size_t alignment)
 		{
 			Seek(binaryio::Align(GetOffset(), alignment));
 		}
 
-		off_t GetOffset()
+		size_t GetOffset()
 		{
-			return static_cast<off_t>(m_outStream.tellp());
+			return static_cast<size_t>(m_outStream.tellp());
 		}
 
 		size_t GetSize()
