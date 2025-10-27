@@ -1,10 +1,11 @@
 #pragma once
-#include <sstream>
-#include <fstream>
-#include <queue>
-#include <stack>
-#include <functional>
 #include <cassert>
+#include <fstream>
+#include <functional>
+#include <queue>
+#include <sstream>
+#include <stack>
+#include <stdint.h>
 #include "util.hpp"
 
 namespace binaryio

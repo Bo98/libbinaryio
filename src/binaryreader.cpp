@@ -67,6 +67,6 @@ std::string BinaryReader::ReadString(size_t size)
 {
 	CheckBounds(size);
 	std::string result(m_buffer.begin() + EffectiveOffset(), m_buffer.begin() + EffectiveOffset() + size);
-	Seek(static_cast<off_t>(size), std::ios::cur);
+	Seek(static_cast<std::streamoff>(size), std::ios::cur);
 	return result;
 }

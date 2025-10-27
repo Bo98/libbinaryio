@@ -2,6 +2,7 @@
 #include <ios>
 #include <memory>
 #include <span>
+#include <stdint.h>
 #include <utility>
 #include <vector>
 #include "util.hpp"
@@ -59,7 +60,7 @@ namespace binaryio
 
 				// Faster read.
 				std::copy(m_buffer.begin() + EffectiveOffset(), m_buffer.begin() + EffectiveOffset() + size, result);
-				Seek(static_cast<off_t>(size), std::ios::cur);
+				Seek(static_cast<std::streamoff>(size), std::ios::cur);
 			}
 			else
 			{
@@ -83,12 +84,22 @@ namespace binaryio
 			Seek(sizeof(T), std::ios::cur);
 		}
 
-		void Seek(off_t offset, std::ios::seekdir seekDir = std::ios::beg)
+		void Seek(size_t offset)
+		{
+			Seek(static_cast<std::streamoff>(offset), std::ios::beg);
+		}
+
+		void Seek(std::streamoff offset, std::ios::seekdir seekDir)
 		{
 			if (seekDir == std::ios::cur)
-				m_offset += offset;
-			else
-				m_offset = offset;
+				offset += m_offset;
+			else if (seekDir == std::ios::end)
+				offset += m_buffer.size();
+
+			if (m_stashedOffset + offset >= m_buffer.size())
+				throw new std::out_of_range("seek out of bounds");
+			
+			m_offset = offset;
 		}
 
 		std::span<uint8_t> GetBuffer() const
@@ -111,7 +122,7 @@ namespace binaryio
 			m_64BitMode = in64BitMode;
 		}
 
-		off_t GetOffset() const
+		size_t GetOffset() const
 		{
 			return m_offset;
 		}
@@ -150,21 +161,21 @@ namespace binaryio
 #else
 			if (value != comparison)
 			{
-				std::cout << "CRITICAL: Expected ";
-				std::cout.operator<<(comparison);
-				std::cout << " at 0x" << std::hex << GetOffset() << std::dec << " but got ";
-				std::cout.operator<<(value);
-				std::cout << "." << std::endl;
+				std::cerr << "CRITICAL: Expected ";
+				std::cerr.operator<<(comparison);
+				std::cerr << " at 0x" << std::hex << GetOffset() << std::dec << " but got ";
+				std::cerr.operator<<(value);
+				std::cerr << "." << std::endl;
 			}
 #endif
 		}
 
-		inline off_t EffectiveOffset()
+		inline size_t EffectiveOffset() const
 		{
 			return m_stashedOffset + m_offset;
 		}
 
-		inline void CheckBounds(size_t size)
+		inline void CheckBounds(size_t size) const
 		{
 			if (EffectiveOffset() + size >= m_buffer.size())
 				throw new std::out_of_range("offset exceeds size");
@@ -173,7 +184,7 @@ namespace binaryio
 		std::span<uint8_t> m_buffer;
 		bool m_bigEndian;
 		bool m_64BitMode;
-		off_t m_offset;
-		off_t m_stashedOffset;
+		size_t m_offset;
+		size_t m_stashedOffset;
 	};
 }
