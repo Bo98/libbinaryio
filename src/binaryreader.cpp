@@ -2,7 +2,7 @@
 
 using namespace binaryio;
 
-BinaryReader::BinaryReader(std::shared_ptr<std::vector<uint8_t>> buffer, bool bigEndian)
+BinaryReader::BinaryReader(std::span<uint8_t> buffer, bool bigEndian)
 {
 	m_buffer = buffer;
 	m_bigEndian = bigEndian;
@@ -65,7 +65,8 @@ std::string BinaryReader::ReadString()
 
 std::string BinaryReader::ReadString(size_t size)
 {
-	std::string result(m_buffer->begin() + EffectiveOffset(), m_buffer->begin() + EffectiveOffset() + size);
+	CheckBounds(size);
+	std::string result(m_buffer.begin() + EffectiveOffset(), m_buffer.begin() + EffectiveOffset() + size);
 	Seek(static_cast<off_t>(size), std::ios::cur);
 	return result;
 }

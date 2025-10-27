@@ -11,9 +11,13 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 add_library(libbinaryio STATIC ${SRC_FILES}
                                ${PUBLIC_HEADERS})
 
-set_property(TARGET libbinaryio PROPERTY CXX_STANDARD 17)
+set_property(TARGET libbinaryio PROPERTY CXX_STANDARD 20)
 set_property(TARGET libbinaryio PROPERTY PREFIX "")
 target_include_directories(libbinaryio PUBLIC ${LIBBINARYIO_ROOT}/include)
+
+if(MSVC)
+    target_compile_options(libbinaryio PRIVATE "/W3" "/Zc:throwingNew" "/EHsc")
+endif()
 
 set_property(TARGET libbinaryio PROPERTY POSITION_INDEPENDENT_CODE ON)
 

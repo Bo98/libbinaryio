@@ -1,6 +1,7 @@
 #pragma once
 #include <ios>
 #include <memory>
+#include <span>
 #include <utility>
 #include <vector>
 #include "util.hpp"
@@ -16,14 +17,16 @@ namespace binaryio
 	class BinaryReader
 	{
 	public:
-		BinaryReader(std::shared_ptr<std::vector<uint8_t>> buffer, bool bigEndian = false);
+		BinaryReader(std::span<uint8_t> buffer, bool bigEndian = false);
 
 		BinaryReader Copy() const;
 
 		template<typename T>
 		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>, T> Read()
 		{
-			const auto data = m_buffer->begin() + EffectiveOffset();
+			CheckBounds(sizeof(T));
+
+			const auto data = m_buffer.begin() + EffectiveOffset();
 			uintmax_t result = 0;
 
 			for (auto i = 0U; i < sizeof(T); i++)
@@ -52,8 +55,10 @@ namespace binaryio
 
 			if (sizeof(R) == 1)
 			{
+				CheckBounds(size);
+
 				// Faster read.
-				std::copy(m_buffer->begin() + EffectiveOffset(), m_buffer->begin() + EffectiveOffset() + size, result);
+				std::copy(m_buffer.begin() + EffectiveOffset(), m_buffer.begin() + EffectiveOffset() + size, result);
 				Seek(static_cast<off_t>(size), std::ios::cur);
 			}
 			else
@@ -86,7 +91,7 @@ namespace binaryio
 				m_offset = offset;
 		}
 
-		std::shared_ptr<std::vector<uint8_t>> GetBuffer() const
+		std::span<uint8_t> GetBuffer() const
 		{
 			return m_buffer;
 		}
@@ -154,12 +159,18 @@ namespace binaryio
 #endif
 		}
 
-		off_t EffectiveOffset()
+		inline off_t EffectiveOffset()
 		{
 			return m_stashedOffset + m_offset;
 		}
 
-		std::shared_ptr<std::vector<uint8_t>> m_buffer;
+		inline void CheckBounds(size_t size)
+		{
+			if (EffectiveOffset() + size >= m_buffer.size())
+				throw new std::out_of_range("offset exceeds size");
+		}
+
+		std::span<uint8_t> m_buffer;
 		bool m_bigEndian;
 		bool m_64BitMode;
 		off_t m_offset;
