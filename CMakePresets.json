@@ -6,6 +6,9 @@
 			"hidden": true,
 			"binaryDir": "${sourceDir}/out/build/${presetName}",
 			"installDir": "${sourceDir}/out/install/${presetName}",
+			"cacheVariables": {
+				"CMAKE_COMPILE_WARNING_AS_ERROR": true
+			}
 		},
 		{
 			"name": "windows-base",
@@ -185,6 +188,108 @@
 				"arm64-release",
 				"unix-base"
 			]
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "base",
+			"hidden": true,
+			"targets": [
+				"all",
+				"all_verify_interface_header_sets"
+			]
+		},
+		{
+			"name": "windows-base",
+			"hidden": true,
+			"inherits": "base",
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "unix-base",
+			"hidden": true,
+			"inherits": "base",
+			"condition": {
+				"type": "notEquals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "x64-debug-windows",
+			"displayName": "x64 Debug",
+			"inherits": "windows-base",
+			"configurePreset": "x64-debug-windows"
+		},
+		{
+			"name": "x64-debug-unix",
+			"displayName": "x64 Debug",
+			"inherits": "unix-base",
+			"configurePreset": "x64-debug-unix"
+		},
+		{
+			"name": "x64-release-windows",
+			"displayName": "x64 Release",
+			"inherits": "windows-base",
+			"configurePreset": "x64-release-windows"
+		},
+		{
+			"name": "x64-release-unix",
+			"displayName": "x64 Release",
+			"inherits": "unix-base",
+			"configurePreset": "x64-release-unix"
+		},
+		{
+			"name": "x86-debug-windows",
+			"displayName": "x86 Debug",
+			"inherits": "windows-base",
+			"configurePreset": "x86-debug-windows"
+		},
+		{
+			"name": "x86-debug-unix",
+			"displayName": "x86 Debug",
+			"inherits": "unix-base",
+			"configurePreset": "x86-debug-unix"
+		},
+		{
+			"name": "x86-release-windows",
+			"displayName": "x86 Release",
+			"inherits": "windows-base",
+			"configurePreset": "x86-release-windows"
+		},
+		{
+			"name": "x86-release-unix",
+			"displayName": "x86 Release",
+			"inherits": "unix-base",
+			"configurePreset": "x86-release-unix"
+		},
+		{
+			"name": "arm64-debug-windows",
+			"displayName": "arm64 Debug",
+			"inherits": "windows-base",
+			"configurePreset": "arm64-debug-windows"
+		},
+		{
+			"name": "arm64-debug-unix",
+			"displayName": "arm64 Debug",
+			"inherits": "unix-base",
+			"configurePreset": "arm64-debug-unix"
+		},
+		{
+			"name": "arm64-release-windows",
+			"displayName": "arm64 Release",
+			"inherits": "windows-base",
+			"configurePreset": "arm64-release-windows"
+		},
+		{
+			"name": "arm64-release-unix",
+			"displayName": "arm64 Release",
+			"inherits": "unix-base",
+			"configurePreset": "arm64-release-unix"
 		}
 	],
 	"testPresets": [
