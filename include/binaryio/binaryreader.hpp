@@ -1,11 +1,9 @@
 #pragma once
 #include <bit>
 #include <ios>
-#include <memory>
 #include <span>
+#include <stdexcept>
 #include <stdint.h>
-#include <utility>
-#include <vector>
 #include "util.hpp"
 
 #ifndef NDEBUG

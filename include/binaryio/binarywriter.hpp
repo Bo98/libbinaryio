@@ -1,11 +1,13 @@
 #pragma once
 #include <bit>
 #include <cassert>
-#include <fstream>
 #include <functional>
+#include <ios>
+#include <limits>
 #include <queue>
 #include <sstream>
 #include <stack>
+#include <stdexcept>
 #include <stdint.h>
 #include "util.hpp"
 
@@ -163,6 +165,16 @@ namespace binaryio
 		size_t GetOffset()
 		{
 			return static_cast<size_t>(m_outStream.tellp());
+		}
+
+		uint32_t GetOffset32()
+		{
+			const auto offset = m_outStream.tellp();
+
+			if (offset > std::numeric_limits<uint32_t>::max())
+				throw new std::out_of_range("Offset out of 32-bit range");
+
+			return static_cast<uint32_t>(offset);
 		}
 
 		size_t GetSize()
