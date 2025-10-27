@@ -19,23 +19,24 @@ namespace binaryio
 		template<typename T>
 		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>> Write(T value)
 		{
-			if (m_endian != std::endian::native)
+			if constexpr (sizeof(T) > 1)
 			{
-				union {
-					T val;
-					uint8_t bytes[sizeof(T)];
-				} processedValue;
-
-				processedValue.val = value;
-
-				for (auto i = 0U; i < sizeof(T) / 2; i++)
+				if (m_endian != std::endian::native)
 				{
-					const auto tmp = processedValue.bytes[sizeof(T) - i - 1];
-					processedValue.bytes[sizeof(T) - i - 1] = processedValue.bytes[i];
-					processedValue.bytes[i] = tmp;
-				}
+					union {
+						T val;
+						uint8_t bytes[sizeof(T)];
+					} processedValue = { .val = value };
 
-				value = processedValue.val;
+					for (auto i = 0U; i < sizeof(T) / 2; i++)
+					{
+						const auto tmp = processedValue.bytes[sizeof(T) - i - 1];
+						processedValue.bytes[sizeof(T) - i - 1] = processedValue.bytes[i];
+						processedValue.bytes[i] = tmp;
+					}
+
+					value = processedValue.val;
+				}
 			}
 
 			m_outStream.write(reinterpret_cast<const char *>(&value), sizeof(T));
