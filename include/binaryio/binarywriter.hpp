@@ -141,7 +141,10 @@ namespace binaryio
 			else if (seekdir == std::ios::end)
 				absoluteOffset += GetSize();
 
-			if (absoluteOffset > GetSize())
+			if (absoluteOffset < 0)
+				throw new std::out_of_range("seek out of bounds");
+
+			if (static_cast<size_t>(absoluteOffset) > GetSize())
 			{
 				m_outStream.seekp(0, std::ios::end);
 				const auto extensionSize = absoluteOffset - GetSize();

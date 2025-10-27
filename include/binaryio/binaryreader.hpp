@@ -95,7 +95,7 @@ namespace binaryio
 			else if (seekDir == std::ios::end)
 				offset += m_buffer.size();
 
-			if (m_stashedOffset + offset >= m_buffer.size())
+			if (offset < 0 || m_stashedOffset + offset >= m_buffer.size())
 				throw new std::out_of_range("seek out of bounds");
 			
 			m_offset = offset;
