@@ -1,4 +1,5 @@
 #pragma once
+#include <bit>
 #include <cassert>
 #include <fstream>
 #include <functional>
@@ -16,7 +17,7 @@ namespace binaryio
 		template<typename T>
 		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>> Write(T value)
 		{
-			if (m_bigEndian)
+			if (m_endian != std::endian::native)
 			{
 				union {
 					T val;
@@ -176,20 +177,20 @@ namespace binaryio
 			return std::move(m_outStream);
 		}
 
-		bool IsBigEndian() const
+		std::endian GetEndian() const
 		{
-			return m_bigEndian;
+			return m_endian;
 		}
 
-		void SetBigEndian(bool bigEndian)
+		void SetEndian(std::endian endian)
 		{
-			m_bigEndian = bigEndian;
+			m_endian = endian;
 		}
 
 	private:
 		std::stringstream m_outStream;
 		std::queue<std::function<void(BinaryWriter &writer)>> m_deferredWrites;
 		std::stack<std::queue<std::function<void(BinaryWriter &writer)>>> m_pushedDeferredWrites;
-		bool m_bigEndian = false;
+		std::endian m_endian = std::endian::native;
 	};
 }

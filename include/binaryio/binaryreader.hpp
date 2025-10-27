@@ -1,4 +1,5 @@
 #pragma once
+#include <bit>
 #include <ios>
 #include <memory>
 #include <span>
@@ -18,7 +19,7 @@ namespace binaryio
 	class BinaryReader
 	{
 	public:
-		BinaryReader(std::span<uint8_t> buffer, bool bigEndian = false);
+		BinaryReader(std::span<uint8_t> buffer, std::endian endian = std::endian::native);
 
 		BinaryReader Copy() const;
 
@@ -32,7 +33,7 @@ namespace binaryio
 
 			for (auto i = 0U; i < sizeof(T); i++)
 			{
-				if (m_bigEndian)
+				if (m_endian != std::endian::native)
 					result |= static_cast<uintmax_t>(data[sizeof(T) - i - 1]) << (i * 8);
 				else
 					result |= static_cast<uintmax_t>(data[i]) << (i * 8);
@@ -54,7 +55,7 @@ namespace binaryio
 			using R = std::remove_pointer_t<T>;
 			T result = new R[size];
 
-			if (sizeof(R) == 1)
+			if constexpr (sizeof(R) == 1)
 			{
 				CheckBounds(size);
 
@@ -107,14 +108,14 @@ namespace binaryio
 			return m_buffer;
 		}
 
-		bool IsBigEndian() const
+		std::endian GetEndian() const
 		{
-			return m_bigEndian;
+			return m_endian;
 		}
 
-		void SetBigEndian(bool bigEndian)
+		void SetEndian(std::endian endian)
 		{
-			m_bigEndian = bigEndian;
+			m_endian = endian;
 		}
 
 		void Set64BitMode(bool in64BitMode)
@@ -182,7 +183,7 @@ namespace binaryio
 		}
 
 		std::span<uint8_t> m_buffer;
-		bool m_bigEndian;
+		std::endian m_endian;
 		bool m_64BitMode;
 		size_t m_offset;
 		size_t m_stashedOffset;
