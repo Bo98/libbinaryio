@@ -75,8 +75,15 @@ namespace binaryio
 		template<typename T>
 		std::enable_if_t<std::is_pointer_v<T>> Write(T value, size_t elementCount)
 		{
-			for (auto i = 0U; i < elementCount; i++)
-				Write(value[i]);
+			if constexpr (sizeof(std::remove_pointer_t<T>) == 1)
+			{
+				m_outStream.write(reinterpret_cast<const char *>(value), elementCount);
+			}
+			else
+			{
+				for (auto i = 0U; i < elementCount; i++)
+					Write(value[i]);
+			}
 		}
 
 		template<typename T>
