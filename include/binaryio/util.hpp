@@ -1,4 +1,5 @@
 #pragma once
+#include <concepts>
 #include <type_traits>
 #include <stddef.h>
 
@@ -17,30 +18,16 @@ namespace binaryio
 	};
 
 
-	template<typename T, typename = void>
-	struct HasValueType : std::false_type
-	{
-	};
+	template<typename T>
+	concept HasValueType = requires { typename T::value_type; };
 
 	template<typename T>
-	struct HasValueType<T, std::void_t<typename T::value_type>> : std::true_type
-	{
-	};
-
-
-	template<typename T, typename = void>
-	struct HasColType : std::false_type
-	{
-	};
-
-	template<typename T>
-	struct HasColType<T, std::void_t<typename T::col_type>> : std::true_type
-	{
-	};
+	concept HasColType = requires { typename T::col_type; };
 
 
 	template<typename T>
-	std::enable_if_t<std::is_integral_v<T>, T> Align(T value, size_t byteAlignment)
+		requires std::integral<T>
+	T Align(T value, size_t byteAlignment)
 	{
 		return static_cast<T>(byteAlignment * ((value + (byteAlignment - 1)) / byteAlignment));
 	}

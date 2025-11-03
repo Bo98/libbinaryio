@@ -17,7 +17,8 @@ namespace binaryio
 	{
 	public:
 		template<typename T>
-		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>> Write(T value)
+			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
+		void Write(T value)
 		{
 			if constexpr (sizeof(T) > 1)
 			{
@@ -45,14 +46,16 @@ namespace binaryio
 		}
 
 		template<typename T>
-		std::enable_if_t<HasValueType<T>::value && !HasColType<T>::value> Write(T value)
+			requires(HasValueType<T> && !HasColType<T>)
+		void Write(T value)
 		{
 			for (auto i = 0U; i < sizeof(T) / sizeof(typename T::value_type); i++)
 				Write(value[i]);
 		}
 
 		template<typename T>
-		std::enable_if_t<HasColType<T>::value> Write(T value)
+			requires HasColType<T>
+		void Write(T value)
 		{
 			for (auto i = 0U; i < sizeof(T) / sizeof(typename T::col_type); i++)
 				Write(value[i]);
@@ -73,7 +76,8 @@ namespace binaryio
 		}
 
 		template<typename T>
-		std::enable_if_t<std::is_pointer_v<T>> Write(T value, size_t elementCount)
+			requires std::is_pointer_v<T>
+		void Write(T value, size_t elementCount)
 		{
 			if constexpr (sizeof(std::remove_pointer_t<T>) == 1)
 			{
@@ -87,7 +91,7 @@ namespace binaryio
 		}
 
 		template<typename T>
-		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || std::is_constructible_v<T, const std::string &>> VisitAndWrite(size_t &offset, T value)
+		void VisitAndWrite(size_t &offset, T value)
 		{
 			const auto prevPos = GetOffset();
 			Seek(offset);

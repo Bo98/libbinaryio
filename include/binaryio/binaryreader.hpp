@@ -22,7 +22,8 @@ namespace binaryio
 		BinaryReader Copy() const;
 
 		template<typename T>
-		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>, T> Read()
+			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
+		T Read()
 		{
 			CheckBounds(sizeof(T));
 
@@ -42,13 +43,15 @@ namespace binaryio
 		}
 
 		template<typename T>
-		std::enable_if_t<HasValueType<T>::value, T> Read()
+			requires HasValueType<T>
+		T Read()
 		{
 			return ReadImpl<T>(std::make_index_sequence<sizeof(T) / sizeof(typename T::value_type)>{});
 		}
 
 		template<typename T>
-		std::enable_if_t<std::is_pointer_v<T>, T> Read(size_t size)
+			requires std::is_pointer_v<T>
+		T Read(size_t size)
 		{
 			using R = std::remove_pointer_t<T>;
 			T result = new R[size];
@@ -71,7 +74,8 @@ namespace binaryio
 		}
 
 		template<typename T>
-		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || HasValueType<T>::value> Verify(T comparison)
+			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || HasValueType<T>
+		void Verify(T comparison)
 		{
 			auto value = Read<T>();
 			VerifyImpl(value, comparison);
@@ -152,13 +156,15 @@ namespace binaryio
 
 	private:
 		template<typename T, size_t... Is>
-		std::enable_if_t<HasValueType<T>::value, T> ReadImpl(std::index_sequence<Is...>)
+			requires HasValueType<T>
+		T ReadImpl(std::index_sequence<Is...>)
 		{
 			return { (static_cast<void>(Is), Read<typename T::value_type>())... };
 		}
 
 		template<typename T>
-		std::enable_if_t<std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || HasValueType<T>::value> VerifyImpl(T value, T comparison)
+			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || HasValueType<T>
+		void VerifyImpl(T value, T comparison)
 		{
 #ifndef NDEBUG
 			assert(value == comparison);
