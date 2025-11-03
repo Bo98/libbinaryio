@@ -184,12 +184,12 @@ namespace binaryio
 			Seek(binaryio::Align(GetOffset(), alignment));
 		}
 
-		size_t GetOffset()
+		[[nodiscard]] size_t GetOffset()
 		{
 			return static_cast<size_t>(m_outStream.tellp());
 		}
 
-		uint32_t GetOffset32()
+		[[nodiscard]] uint32_t GetOffset32()
 		{
 			const auto offset = m_outStream.tellp();
 
@@ -199,19 +199,19 @@ namespace binaryio
 			return static_cast<uint32_t>(offset);
 		}
 
-		size_t GetSize()
+		[[nodiscard]] size_t GetSize()
 		{
 			m_outStream.seekg(0, std::ios::end);
 			return m_outStream.tellg();
 		}
 
-		std::stringstream GetStream()
+		[[nodiscard]] std::stringstream GetStream()
 		{
 			m_outStream.seekg(0);
 			return std::move(m_outStream);
 		}
 
-		std::endian GetEndian() const
+		[[nodiscard]] std::endian GetEndian() const
 		{
 			return m_endian;
 		}

@@ -23,7 +23,7 @@ namespace binaryio
 
 		template<typename T>
 			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
-		T Read()
+		[[nodiscard]] T Read()
 		{
 			CheckBounds(sizeof(T));
 
@@ -44,14 +44,14 @@ namespace binaryio
 
 		template<typename T>
 			requires HasValueType<T>
-		T Read()
+		[[nodiscard]] T Read()
 		{
 			return ReadImpl<T>(std::make_index_sequence<sizeof(T) / sizeof(typename T::value_type)>{});
 		}
 
 		template<typename T>
 			requires std::is_pointer_v<T>
-		T Read(size_t size)
+		[[nodiscard]] T Read(size_t size)
 		{
 			using R = std::remove_pointer_t<T>;
 			T result = new R[size];
@@ -105,12 +105,12 @@ namespace binaryio
 			m_offset = offset;
 		}
 
-		std::span<uint8_t> GetBuffer() const
+		[[nodiscard]] std::span<uint8_t> GetBuffer() const
 		{
 			return m_buffer;
 		}
 
-		std::endian GetEndian() const
+		[[nodiscard]] std::endian GetEndian() const
 		{
 			return m_endian;
 		}
@@ -130,7 +130,7 @@ namespace binaryio
 			m_64BitMode = in64BitMode;
 		}
 
-		size_t GetOffset() const
+		[[nodiscard]] size_t GetOffset() const
 		{
 			return m_offset;
 		}
@@ -144,20 +144,20 @@ namespace binaryio
 		void Align();
 		void Align(size_t byteAlignment);
 
-		uint64_t ReadPointer();
+		[[nodiscard]] uint64_t ReadPointer();
 		void SkipPointer();
 		void VerifyPointer(uint64_t comparison)
 		{
 			VerifyImpl(ReadPointer(), comparison);
 		}
 
-		std::string ReadString();
-		std::string ReadString(size_t size);
+		[[nodiscard]] std::string ReadString();
+		[[nodiscard]] std::string ReadString(size_t size);
 
 	private:
 		template<typename T, size_t... Is>
 			requires HasValueType<T>
-		T ReadImpl(std::index_sequence<Is...>)
+		[[nodiscard]] T ReadImpl(std::index_sequence<Is...>)
 		{
 			return { (static_cast<void>(Is), Read<typename T::value_type>())... };
 		}
@@ -180,7 +180,7 @@ namespace binaryio
 #endif
 		}
 
-		inline size_t EffectiveOffset() const
+		[[nodiscard]] inline size_t EffectiveOffset() const
 		{
 			return m_stashedOffset + m_offset;
 		}

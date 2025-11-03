@@ -30,7 +30,7 @@ namespace binaryio
 
 	template<typename T>
 		requires std::integral<T>
-	T Align(T value, size_t byteAlignment)
+	[[nodiscard]] T Align(T value, size_t byteAlignment)
 	{
 		return static_cast<T>(byteAlignment * ((value + (byteAlignment - 1)) / byteAlignment));
 	}
