@@ -74,7 +74,6 @@ namespace binaryio
 		}
 
 		template<typename T>
-			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> || HasValueType<T>
 		void Verify(T comparison)
 		{
 			auto value = Read<T>();
@@ -83,6 +82,7 @@ namespace binaryio
 
 		template<typename T>
 		void Skip()
+			requires requires { Read<T>(); }
 		{
 			Seek(sizeof(T), std::ios::cur);
 		}
