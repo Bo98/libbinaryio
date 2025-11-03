@@ -24,6 +24,9 @@ namespace binaryio
 	template<typename T>
 	concept HasColType = requires { typename T::col_type; };
 
+	template <class T, class U>
+	concept IsOnlyExplicitlyConvertible = !std::is_convertible_v<T, U> && requires(T t) { static_cast<U>(t); };
+
 
 	template<typename T>
 		requires std::integral<T>

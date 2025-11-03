@@ -61,6 +61,13 @@ namespace binaryio
 				Write(value[i]);
 		}
 
+		template<typename T, typename U>
+			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type> && IsOnlyExplicitlyConvertible<U, T>
+		void Write(U value)
+		{
+			return Write(static_cast<T>(value));
+		}
+
 		void Write(const std::string &value, bool nullTerminate = true)
 		{
 			if (value.empty())
