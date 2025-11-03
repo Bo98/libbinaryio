@@ -116,6 +116,11 @@ namespace binaryio
 			m_endian = endian;
 		}
 
+		void SwapEndian()
+		{
+			m_endian = (m_endian == std::endian::little) ? std::endian::big : std::endian::little;
+		}
+
 		void Set64BitMode(bool in64BitMode)
 		{
 			m_64BitMode = in64BitMode;
