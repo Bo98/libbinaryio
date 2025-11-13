@@ -19,8 +19,6 @@ namespace binaryio
 	public:
 		BinaryReader(std::span<uint8_t> buffer, std::endian endian = std::endian::native);
 
-		BinaryReader Copy() const;
-
 		template<typename T>
 			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
 		[[nodiscard]] T Read()

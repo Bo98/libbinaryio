@@ -11,16 +11,6 @@ BinaryReader::BinaryReader(std::span<uint8_t> buffer, std::endian endian)
 	m_stashedOffset = 0;
 }
 
-BinaryReader BinaryReader::Copy() const
-{
-	auto fileStream = BinaryReader(m_buffer, m_endian);
-	fileStream.Set64BitMode(m_64BitMode);
-	fileStream.Seek(m_stashedOffset);
-	fileStream.StashOffset();
-	fileStream.Seek(m_offset);
-	return fileStream;
-}
-
 void BinaryReader::Align()
 {
 	Align(m_64BitMode ? 8 : 4);
