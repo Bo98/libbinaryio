@@ -9,6 +9,7 @@
 #include <stack>
 #include <stdexcept>
 #include <stdint.h>
+#include <string_view>
 #include "util.hpp"
 
 namespace binaryio
@@ -68,7 +69,7 @@ namespace binaryio
 			return Write(static_cast<T>(value));
 		}
 
-		void Write(const std::string &value, bool nullTerminate = true)
+		void Write(std::string_view value, bool nullTerminate = true)
 		{
 			if (value.empty())
 			{
@@ -77,7 +78,7 @@ namespace binaryio
 				return;
 			}
 
-			m_outStream.write(value.c_str(), value.length() + size_t(nullTerminate ? 1 : 0));
+			m_outStream.write(value.data(), value.length() + size_t(nullTerminate ? 1 : 0));
 
 			assert(!m_outStream.fail());
 		}
