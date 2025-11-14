@@ -7,6 +7,7 @@
 			"binaryDir": "${sourceDir}/out/build/${presetName}",
 			"installDir": "${sourceDir}/out/install/${presetName}",
 			"cacheVariables": {
+				"CMAKE_VERIFY_INTERFACE_HEADER_SETS": true,
 				"CMAKE_COMPILE_WARNING_AS_ERROR": true
 			}
 		},

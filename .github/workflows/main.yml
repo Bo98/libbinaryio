@@ -35,7 +35,11 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             export CMAKE_GENERATOR=Ninja
           fi
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_INSTALL_PREFIX=install -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+          cmake -S. -Bbuild \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX=install \
+            -DCMAKE_VERIFY_INTERFACE_HEADER_SETS=ON \
+            -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
           cmake --build build
           cmake --build build --target all_verify_interface_header_sets
           cmake --install build

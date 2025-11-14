@@ -17,7 +17,8 @@ namespace binaryio
 	class BinaryReader
 	{
 	public:
-		BinaryReader(std::span<uint8_t> buffer, std::endian endian = std::endian::native);
+		BinaryReader(std::span<uint8_t> buffer, std::endian endian = std::endian::native)
+			: m_buffer(std::move(buffer)), m_offset(0), m_stashedOffset(0), m_endian(endian), m_64BitMode(false) {}
 
 		template<typename T>
 			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
@@ -139,18 +140,60 @@ namespace binaryio
 			m_offset = 0;
 		}
 
-		void Align();
-		void Align(size_t byteAlignment);
+		void Align()
+		{
+			Align(m_64BitMode ? 8 : 4);
+		}
 
-		[[nodiscard]] uint64_t ReadPointer();
-		void SkipPointer();
+		void Align(size_t byteAlignment)
+		{
+			m_offset = binaryio::Align(m_offset, byteAlignment);
+		}
+
+		[[nodiscard]] uint64_t ReadPointer()
+		{
+			Align();
+
+			if (m_64BitMode)
+				return Read<uint64_t>();
+
+			return Read<uint32_t>();
+		}
+
+		void SkipPointer()
+		{
+			Align();
+
+			if (m_64BitMode)
+				return Skip<uint64_t>();
+
+			Skip<uint32_t>();
+		}
+
 		void VerifyPointer(uint64_t comparison)
 		{
 			VerifyImpl(ReadPointer(), comparison);
 		}
 
-		[[nodiscard]] std::string ReadString();
-		[[nodiscard]] std::string ReadString(size_t size);
+		[[nodiscard]] std::string ReadString()
+		{
+			std::string result;
+			char c;
+			while ((c = Read<char>()))
+				result.push_back(c);
+
+			Align();
+
+			return result;
+		}
+
+		[[nodiscard]] std::string ReadString(size_t size)
+		{
+			CheckBounds(size);
+			std::string result(m_buffer.begin() + EffectiveOffset(), m_buffer.begin() + EffectiveOffset() + size);
+			Seek(static_cast<std::streamoff>(size), std::ios::cur);
+			return result;
+		}
 
 	private:
 		template<typename T, size_t... Is>
@@ -190,9 +233,9 @@ namespace binaryio
 		}
 
 		std::span<uint8_t> m_buffer;
-		std::endian m_endian;
-		bool m_64BitMode;
 		size_t m_offset;
 		size_t m_stashedOffset;
+		std::endian m_endian;
+		bool m_64BitMode;
 	};
 }
