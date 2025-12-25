@@ -1,7 +1,10 @@
 #pragma once
+// IWYU pragma: private
+// IWYU pragma: begin_exports
 #include <concepts>
 #include <type_traits>
 #include <stddef.h>
+// IWYU pragma: end_exports
 
 namespace binaryio
 {

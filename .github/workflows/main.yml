@@ -4,7 +4,32 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Lint
+        uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        with:
+          style: ''
+          tidy-checks: ''
+          version: 19
+          verbosity: debug
+          extra-args: -std=c++20
+
+      - name: Fail
+        if: steps.linter.outputs.checks-failed > 0
+        run: exit 1
+
   test:
     strategy:
       matrix:
@@ -19,7 +44,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -44,7 +69,7 @@ jobs:
           cmake --build build --target all_verify_interface_header_sets
           cmake --install build
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: binaryio-${{ matrix.build_type }}-${{ matrix.os }}
           path: install/*

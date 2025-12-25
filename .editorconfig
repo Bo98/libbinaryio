@@ -5,5 +5,8 @@ indent_style = tab
 tab_width = 4
 insert_final_newline = true
 
-[{CMakeLists.txt,*.cmake,*.yml}]
+[{CMakeLists.txt,*.cmake,*.yml,.clang-tidy}]
 indent_style = space
+
+[{*.yml,.clang-tidy}]
+indent_size = 2

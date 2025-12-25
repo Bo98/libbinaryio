@@ -9,6 +9,12 @@
 			"cacheVariables": {
 				"CMAKE_VERIFY_INTERFACE_HEADER_SETS": true,
 				"CMAKE_COMPILE_WARNING_AS_ERROR": true
+			},
+			"vendor": {
+				"microsoft.com/VisualStudioSettings/CMake/1.0": {
+					"enableMicrosoftCodeAnalysis": true,
+					"enableClangTidyCodeAnalysis": true
+				}
 			}
 		},
 		{

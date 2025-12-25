@@ -1,0 +1,19 @@
+# modernize-use-nullptr disabled due to https://github.com/llvm/llvm-project/issues/53778
+Checks: >
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  cert-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-init-variables,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  misc-*,
+  modernize-*,
+  -modernize-deprecated-headers,
+  -modernize-use-nullptr,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  portability-*,
+  readability-redundant-inline-specifier
+HeaderFilterRegex: '.*'

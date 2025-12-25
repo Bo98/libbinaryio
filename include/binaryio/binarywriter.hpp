@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <bit>
 #include <cassert>
 #include <functional>
@@ -10,7 +11,8 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <string_view>
-#include "util.hpp"
+#include <utility>
+#include "util.hpp" // IWYU pragma: export
 
 namespace binaryio
 {
@@ -27,7 +29,7 @@ namespace binaryio
 				{
 					union {
 						T val;
-						uint8_t bytes[sizeof(T)];
+						std::array<uint8_t, sizeof(T)> bytes;
 					} processedValue = { .val = value };
 
 					for (auto i = 0U; i < sizeof(T) / 2; i++)
@@ -78,7 +80,7 @@ namespace binaryio
 				return;
 			}
 
-			m_outStream.write(value.data(), value.length() + size_t(nullTerminate ? 1 : 0));
+			m_outStream.write(value.data(), static_cast<std::streamsize>(value.length()) + (nullTerminate ? 1 : 0));
 
 			assert(!m_outStream.fail());
 		}
@@ -89,7 +91,7 @@ namespace binaryio
 		{
 			if constexpr (sizeof(std::remove_pointer_t<T>) == 1)
 			{
-				m_outStream.write(reinterpret_cast<const char *>(value), elementCount);
+				m_outStream.write(reinterpret_cast<const char *>(value), static_cast<std::streamsize>(elementCount));
 			}
 			else
 			{
@@ -157,17 +159,17 @@ namespace binaryio
 		{
 			auto absoluteOffset = offset;
 			if (seekdir == std::ios::cur)
-				absoluteOffset += GetOffset();
+				absoluteOffset += static_cast<std::streamoff>(GetOffset());
 			else if (seekdir == std::ios::end)
-				absoluteOffset += GetSize();
+				absoluteOffset += static_cast<std::streamoff>(GetSize());
 
 			if (absoluteOffset < 0)
-				throw new std::out_of_range("seek out of bounds");
+				throw std::out_of_range("seek out of bounds");
 
 			if (static_cast<size_t>(absoluteOffset) > GetSize())
 			{
 				m_outStream.seekp(0, std::ios::end);
-				const auto extensionSize = absoluteOffset - GetSize();
+				const auto extensionSize = absoluteOffset - static_cast<std::streamsize>(GetSize());
 				const auto buffer = new char[extensionSize]();
 				m_outStream.write(buffer, extensionSize);
 				delete[] buffer;
@@ -195,7 +197,7 @@ namespace binaryio
 			const auto offset = m_outStream.tellp();
 
 			if (offset > std::numeric_limits<uint32_t>::max())
-				throw new std::out_of_range("Offset out of 32-bit range");
+				throw std::out_of_range("Offset out of 32-bit range");
 
 			return static_cast<uint32_t>(offset);
 		}
@@ -226,6 +228,6 @@ namespace binaryio
 		std::stringstream m_outStream;
 		std::queue<std::function<void(BinaryWriter &writer)>> m_deferredWrites;
 		std::stack<std::queue<std::function<void(BinaryWriter &writer)>>> m_pushedDeferredWrites;
-		std::endian m_endian = std::endian::native;
+		std::endian m_endian{ std::endian::native };
 	};
 }

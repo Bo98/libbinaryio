@@ -1,10 +1,13 @@
 #pragma once
+#include <algorithm>
 #include <bit>
 #include <ios>
 #include <span>
 #include <stdexcept>
 #include <stdint.h>
-#include "util.hpp"
+#include <string>
+#include <utility>
+#include "util.hpp" // IWYU pragma: export
 
 #ifndef NDEBUG
 #include <cassert>
@@ -18,7 +21,7 @@ namespace binaryio
 	{
 	public:
 		BinaryReader(std::span<uint8_t> buffer, std::endian endian = std::endian::native)
-			: m_buffer(std::move(buffer)), m_offset(0), m_stashedOffset(0), m_endian(endian), m_64BitMode(false) {}
+			: m_buffer(buffer), m_endian(endian) {}
 
 		template<typename T>
 			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
@@ -34,7 +37,7 @@ namespace binaryio
 				if (m_endian != std::endian::native)
 					result |= static_cast<uintmax_t>(data[sizeof(T) - i - 1]) << (i * 8);
 				else
-					result |= static_cast<uintmax_t>(data[i]) << (i * 8);
+					result |= static_cast<uintmax_t>(data[static_cast<ptrdiff_t>(i)]) << (i * 8);
 			}
 
 			Skip<T>();
@@ -60,7 +63,7 @@ namespace binaryio
 				CheckBounds(size);
 
 				// Faster read.
-				std::copy(m_buffer.begin() + EffectiveOffset(), m_buffer.begin() + EffectiveOffset() + size, result);
+				std::copy_n(m_buffer.begin() + EffectiveOffset(), size, result);
 				Seek(static_cast<std::streamoff>(size), std::ios::cur);
 			}
 			else
@@ -94,12 +97,12 @@ namespace binaryio
 		void Seek(std::streamoff offset, std::ios::seekdir seekDir)
 		{
 			if (seekDir == std::ios::cur)
-				offset += m_offset;
+				offset += static_cast<std::streamoff>(m_offset);
 			else if (seekDir == std::ios::end)
-				offset += m_buffer.size();
+				offset += std::ssize(m_buffer);
 
 			if (offset < 0 || m_stashedOffset + offset > m_buffer.size())
-				throw new std::out_of_range("seek out of bounds");
+				throw std::out_of_range("seek out of bounds");
 			
 			m_offset = offset;
 		}
@@ -190,7 +193,8 @@ namespace binaryio
 		[[nodiscard]] std::string ReadString(size_t size)
 		{
 			CheckBounds(size);
-			std::string result(m_buffer.begin() + EffectiveOffset(), m_buffer.begin() + EffectiveOffset() + size);
+			const auto iter = m_buffer.begin() + EffectiveOffset();
+			std::string result(iter, iter + static_cast<ptrdiff_t>(size));
 			Seek(static_cast<std::streamoff>(size), std::ios::cur);
 			return result;
 		}
@@ -221,21 +225,21 @@ namespace binaryio
 #endif
 		}
 
-		[[nodiscard]] inline size_t EffectiveOffset() const
+		[[nodiscard]] ptrdiff_t EffectiveOffset() const
 		{
-			return m_stashedOffset + m_offset;
+			return static_cast<ptrdiff_t>(m_stashedOffset + m_offset);
 		}
 
-		inline void CheckBounds(size_t size) const
+		void CheckBounds(size_t size) const
 		{
 			if (EffectiveOffset() + size > m_buffer.size())
-				throw new std::out_of_range("offset exceeds size");
+				throw std::out_of_range("offset exceeds size");
 		}
 
 		std::span<uint8_t> m_buffer;
-		size_t m_offset;
-		size_t m_stashedOffset;
+		size_t m_offset{ 0 };
+		size_t m_stashedOffset{ 0 };
 		std::endian m_endian;
-		bool m_64BitMode;
+		bool m_64BitMode{ false };
 	};
 }
