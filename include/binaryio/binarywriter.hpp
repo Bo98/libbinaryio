@@ -9,7 +9,6 @@
 #include <sstream>
 #include <stack>
 #include <stdexcept>
-#include <stdint.h>
 #include <string_view>
 #include <utility>
 #include "util.hpp" // IWYU pragma: export

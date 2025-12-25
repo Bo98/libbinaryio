@@ -4,7 +4,6 @@
 #include <ios>
 #include <span>
 #include <stdexcept>
-#include <stdint.h>
 #include <string>
 #include <utility>
 #include "util.hpp" // IWYU pragma: export
@@ -27,21 +26,23 @@ namespace binaryio
 			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
 		[[nodiscard]] T Read()
 		{
+			using U = MakeUnsignedInteger<typename SafeUnderlyingType<T>::type>;
+
 			CheckBounds(sizeof(T));
 
 			const auto data = m_buffer.begin() + EffectiveOffset();
-			uintmax_t result = 0;
+			U result = 0;
 
 			for (auto i = 0U; i < sizeof(T); i++)
 			{
 				if (m_endian != std::endian::native)
-					result |= static_cast<uintmax_t>(data[sizeof(T) - i - 1]) << (i * 8);
+					result |= static_cast<U>(data[sizeof(T) - i - 1]) << (i * 8);
 				else
-					result |= static_cast<uintmax_t>(data[static_cast<ptrdiff_t>(i)]) << (i * 8);
+					result |= static_cast<U>(data[static_cast<ptrdiff_t>(i)]) << (i * 8);
 			}
 
 			Skip<T>();
-			return reinterpret_cast<T &>(result);
+			return std::bit_cast<T>(result);
 		}
 
 		template<typename T>
