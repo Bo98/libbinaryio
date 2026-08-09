@@ -2,9 +2,11 @@
 // IWYU pragma: private
 // IWYU pragma: begin_exports
 #include <concepts>
+#include <limits>
 #include <tuple>
 #include <type_traits>
 #include <stddef.h>
+#include <stdexcept>
 #include <stdint.h>
 // IWYU pragma: end_exports
 
@@ -68,9 +70,12 @@ namespace binaryio
 
 
 	template<typename T>
-		requires std::integral<T>
+		requires std::unsigned_integral<T>
 	[[nodiscard]] T Align(T value, size_t byteAlignment)
 	{
+		if (byteAlignment == 0 || (byteAlignment - 1) > (std::numeric_limits<T>::max() - value))
+			throw std::out_of_range("alignment out of range");
+
 		return static_cast<T>(byteAlignment * ((value + (byteAlignment - 1)) / byteAlignment));
 	}
 }

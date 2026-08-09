@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <bit>
+#include <cstring>
 #include <ios>
 #include <span>
 #include <stdexcept>
@@ -26,23 +27,35 @@ namespace binaryio
 			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
 		[[nodiscard]] T Read()
 		{
-			using U = MakeUnsignedInteger<typename SafeUnderlyingType<T>::type>;
-
-			CheckBounds(sizeof(T));
-
-			const auto data = m_buffer.begin() + EffectiveOffset();
-			U result = 0;
-
-			for (auto i = 0U; i < sizeof(T); i++)
+			if constexpr (std::same_as<std::remove_cv_t<T>, bool>)
 			{
-				if (m_endian != std::endian::native)
-					result |= static_cast<U>(data[sizeof(T) - i - 1]) << (i * 8);
-				else
-					result |= static_cast<U>(data[static_cast<ptrdiff_t>(i)]) << (i * 8);
+				return Read<uint8_t>() != 0;
 			}
+			else
+			{
+				using U = MakeUnsignedInteger<typename SafeUnderlyingType<T>::type>;
 
-			Skip<T>();
-			return std::bit_cast<T>(result);
+				const auto data = CheckedSubspan(sizeof(T));
+
+				U result;
+				std::memcpy(&result, data.data(), sizeof(result));
+
+				if constexpr (sizeof(U) > 1)
+				{
+					if (m_endian != std::endian::native)
+					{
+						U tmp = result;
+						for (size_t i = 0; i < sizeof(U); ++i)
+						{
+							result = static_cast<U>((result << 8) | (tmp & 0xFFU));
+							tmp >>= 8;
+						}
+					}
+				}
+
+				Skip<T>();
+				return std::bit_cast<T>(result);
+			}
 		}
 
 		template<typename T>
@@ -61,10 +74,9 @@ namespace binaryio
 
 			if constexpr (sizeof(R) == 1)
 			{
-				CheckBounds(size);
-
 				// Faster read.
-				std::copy_n(m_buffer.begin() + EffectiveOffset(), size, result);
+				const auto data = CheckedSubspan(size);
+				std::copy_n(data.begin(), size, result);
 				Seek(static_cast<std::streamoff>(size), std::ios::cur);
 			}
 			else
@@ -100,20 +112,48 @@ namespace binaryio
 
 		void Seek(size_t offset)
 		{
-			Seek(static_cast<std::streamoff>(offset), std::ios::beg);
+			if (!IsInBounds(offset))
+				throw std::out_of_range("seek out of bounds");
+
+			m_offset = offset;
 		}
 
 		void Seek(std::streamoff offset, std::ios::seekdir seekDir)
 		{
-			if (seekDir == std::ios::cur)
-				offset += static_cast<std::streamoff>(m_offset);
-			else if (seekDir == std::ios::end)
-				offset += std::ssize(m_buffer);
+			const auto end = m_buffer.size() - m_stashedOffset;
 
-			if (offset < 0 || m_stashedOffset + offset > m_buffer.size())
-				throw std::out_of_range("seek out of bounds");
-			
-			m_offset = offset;
+			size_t base;
+			switch (seekDir)
+			{
+			case std::ios::beg:
+				base = 0;
+				break;
+			case std::ios::cur:
+				base = m_offset;
+				break;
+			case std::ios::end:
+				base = end;
+				break;
+			default:
+				throw std::invalid_argument("invalid seek direction");
+			}
+
+			if (offset >= 0)
+			{
+				if (std::cmp_greater(offset, end - base))
+					throw std::out_of_range("seek out of bounds");
+
+				m_offset = base + static_cast<size_t>(offset);
+			}
+			else
+			{
+				using U = std::make_unsigned_t<std::streamoff>;
+				const auto magnitude = U{} - static_cast<U>(offset);
+				if (magnitude > base)
+					throw std::out_of_range("seek out of bounds");
+
+				m_offset = base - static_cast<size_t>(magnitude);
+			}
 		}
 
 		[[nodiscard]] std::span<uint8_t> GetBuffer() const
@@ -159,7 +199,7 @@ namespace binaryio
 
 		void Align(size_t byteAlignment)
 		{
-			m_offset = binaryio::Align(m_offset, byteAlignment);
+			m_offset = std::min(binaryio::Align(m_offset, byteAlignment), m_buffer.size() - m_stashedOffset);
 		}
 
 		[[nodiscard]] uint64_t ReadPointer()
@@ -201,9 +241,8 @@ namespace binaryio
 
 		[[nodiscard]] std::string ReadString(size_t size)
 		{
-			CheckBounds(size);
-			const auto iter = m_buffer.begin() + EffectiveOffset();
-			std::string result(iter, iter + static_cast<ptrdiff_t>(size));
+			const auto data = CheckedSubspan(size);
+			std::string result(data.begin(), data.end());
 			Seek(static_cast<std::streamoff>(size), std::ios::cur);
 			return result;
 		}
@@ -244,15 +283,24 @@ namespace binaryio
 #endif
 		}
 
-		[[nodiscard]] ptrdiff_t EffectiveOffset() const
+		[[nodiscard]] size_t EffectiveOffset() const
 		{
-			return static_cast<ptrdiff_t>(m_stashedOffset + m_offset);
+			return m_stashedOffset + m_offset;
 		}
 
-		void CheckBounds(size_t size) const
+		[[nodiscard]] bool IsInBounds(size_t offset, size_t size = 0) const
 		{
-			if (EffectiveOffset() + size > m_buffer.size())
+			const auto available = m_buffer.size() - m_stashedOffset;
+			return offset <= available &&
+				size <= available - offset;
+		}
+
+		[[nodiscard]] std::span<uint8_t> CheckedSubspan(size_t size)
+		{
+			if (!IsInBounds(m_offset, size))
 				throw std::out_of_range("offset exceeds size");
+
+			return m_buffer.subspan(EffectiveOffset(), size);
 		}
 
 		std::span<uint8_t> m_buffer;

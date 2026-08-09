@@ -1,10 +1,9 @@
 #pragma once
 #include <array>
 #include <bit>
-#include <cassert>
 #include <functional>
 #include <ios>
-#include <limits>
+#include <memory>
 #include <queue>
 #include <ranges>
 #include <sstream>
@@ -22,6 +21,11 @@ namespace binaryio
 	class BinaryWriter
 	{
 	public:
+		BinaryWriter()
+		{
+			m_outStream.exceptions(std::ios::badbit | std::ios::failbit);
+		}
+
 		template<typename T>
 			requires std::is_arithmetic_v<typename SafeUnderlyingType<T>::type>
 		void Write(T value)
@@ -47,8 +51,6 @@ namespace binaryio
 			}
 
 			m_outStream.write(reinterpret_cast<const char *>(&value), sizeof(T));
-
-			assert(!m_outStream.fail());
 		}
 
 		template<typename T>
@@ -81,8 +83,6 @@ namespace binaryio
 
 			if (nullTerminate)
 				Write<uint8_t>(0);
-
-			assert(!m_outStream.fail());
 		}
 
 		template<typename T>
@@ -120,8 +120,6 @@ namespace binaryio
 			writer.m_outStream.seekg(0);
 			Seek(0, std::ios::end);
 			m_outStream << writer.m_outStream.rdbuf();
-
-			assert(!m_outStream.fail());
 		}
 
 		void Defer(const std::function<void(BinaryWriter &writer)> &deferWriteFn)
@@ -159,7 +157,7 @@ namespace binaryio
 		{
 			auto absoluteOffset = offset;
 			if (seekdir == std::ios::cur)
-				absoluteOffset += static_cast<std::streamoff>(GetOffset());
+				absoluteOffset += m_outStream.tellp();
 			else if (seekdir == std::ios::end)
 				absoluteOffset += static_cast<std::streamoff>(GetSize());
 
@@ -170,16 +168,13 @@ namespace binaryio
 			{
 				m_outStream.seekp(0, std::ios::end);
 				const auto extensionSize = absoluteOffset - static_cast<std::streamsize>(GetSize());
-				const auto buffer = new char[extensionSize]();
-				m_outStream.write(buffer, extensionSize);
-				delete[] buffer;
+				const auto buffer = std::make_unique<char[]>(extensionSize);
+				m_outStream.write(buffer.get(), extensionSize);
 			}
 			else
 			{
 				m_outStream.seekp(absoluteOffset);
 			}
-
-			assert(!m_outStream.fail());
 		}
 
 		void Align(size_t alignment)
@@ -194,9 +189,9 @@ namespace binaryio
 
 		[[nodiscard]] uint32_t GetOffset32()
 		{
-			const auto offset = m_outStream.tellp();
+			const std::streamoff offset = m_outStream.tellp();
 
-			if (offset > std::numeric_limits<uint32_t>::max())
+			if (!std::in_range<uint32_t>(offset))
 				throw std::out_of_range("Offset out of 32-bit range");
 
 			return static_cast<uint32_t>(offset);

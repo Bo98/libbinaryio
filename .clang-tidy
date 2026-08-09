@@ -1,4 +1,5 @@
 # modernize-use-nullptr disabled due to https://github.com/llvm/llvm-project/issues/53778
+# *-avoid-c-arrays disabled due to https://github.com/llvm/llvm-project/issues/132260
 Checks: >
   bugprone-*,
   -bugprone-easily-swappable-parameters,
@@ -10,10 +11,12 @@ Checks: >
   -cppcoreguidelines-pro-type-reinterpret-cast,
   misc-*,
   modernize-*,
+  -*-avoid-c-arrays,
   -modernize-deprecated-headers,
   -modernize-use-nullptr,
   -modernize-use-trailing-return-type,
   performance-*,
   portability-*,
+  -portability-avoid-pragma-once,
   readability-redundant-inline-specifier
 HeaderFilterRegex: '.*'
