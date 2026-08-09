@@ -34,7 +34,7 @@ namespace binaryio
 
 	template<typename T>
 		requires std::is_arithmetic_v<T>
-	using MakeUnsignedInteger = std::conditional_t<std::is_floating_point_v<T>, typename SelectUint<sizeof(T)>::type, std::make_unsigned_t<T>>;
+	using MakeUnsignedInteger = typename std::conditional_t<std::is_floating_point_v<T>, SelectUint<sizeof(T)>, std::make_unsigned<T>>::type;
 
 
 	template<typename T>
