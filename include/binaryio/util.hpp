@@ -2,6 +2,7 @@
 // IWYU pragma: private
 // IWYU pragma: begin_exports
 #include <concepts>
+#include <tuple>
 #include <type_traits>
 #include <stddef.h>
 #include <stdint.h>
@@ -40,10 +41,30 @@ namespace binaryio
 	concept HasValueType = requires { typename T::value_type; };
 
 	template<typename T>
-	concept HasColType = requires { typename T::col_type; };
+	concept TupleSized = requires { typename std::tuple_size<T>::type; };
+
+	template<typename T>
+	concept ConstexprLength = requires { std::integral_constant<size_t, static_cast<size_t>(T::length())>{}; };
+
+	template<typename T>
+	concept Indexable = requires(const T &value, size_t index) {
+		value[index];
+	};
+
+	template<typename T>
+	concept FixedSizeSequence = HasValueType<T> && Indexable<T> && (TupleSized<T> || ConstexprLength<T>);
+
+	template<typename T>
+	concept LengthIndexable = Indexable<T> && requires(const T &value, size_t index) {
+		{ value.length() } -> std::convertible_to<size_t>;
+	};
 
 	template<class T, class U>
 	concept IsOnlyExplicitlyConvertible = !std::is_convertible_v<T, U> && requires(T t) { static_cast<U>(t); };
+
+
+	template<typename T>
+	using SequenceElement = std::remove_cvref_t<decltype(std::declval<const T &>()[size_t{}])>;
 
 
 	template<typename T>

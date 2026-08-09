@@ -6,6 +6,7 @@
 #include <ios>
 #include <limits>
 #include <queue>
+#include <ranges>
 #include <sstream>
 #include <stack>
 #include <stdexcept>
@@ -15,6 +16,9 @@
 
 namespace binaryio
 {
+	template<typename T>
+	concept StringViewConvertible = std::convertible_to<const T &, std::string_view>;
+
 	class BinaryWriter
 	{
 	public:
@@ -48,18 +52,18 @@ namespace binaryio
 		}
 
 		template<typename T>
-			requires(HasValueType<T> && !HasColType<T>)
-		void Write(T value)
+			requires(std::ranges::input_range<const T> && !StringViewConvertible<T>)
+		void Write(const T &values)
 		{
-			for (auto i = 0U; i < sizeof(T) / sizeof(typename T::value_type); i++)
-				Write(value[i]);
+			for (const auto &value : values)
+				Write(value);
 		}
 
 		template<typename T>
-			requires HasColType<T>
-		void Write(T value)
+			requires(!std::ranges::input_range<const T> && LengthIndexable<T> && !StringViewConvertible<T>)
+		void Write(const T &value)
 		{
-			for (auto i = 0U; i < sizeof(T) / sizeof(typename T::col_type); i++)
+			for (size_t i = 0; i < static_cast<size_t>(value.length()); i++)
 				Write(value[i]);
 		}
 
@@ -72,14 +76,11 @@ namespace binaryio
 
 		void Write(std::string_view value, bool nullTerminate = true)
 		{
-			if (value.empty())
-			{
-				if (nullTerminate)
-					Write<uint8_t>(0);
-				return;
-			}
+			if (!value.empty())
+				m_outStream.write(value.data(), static_cast<std::streamsize>(value.length()));
 
-			m_outStream.write(value.data(), static_cast<std::streamsize>(value.length()) + (nullTerminate ? 1 : 0));
+			if (nullTerminate)
+				Write<uint8_t>(0);
 
 			assert(!m_outStream.fail());
 		}

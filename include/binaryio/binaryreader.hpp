@@ -46,10 +46,10 @@ namespace binaryio
 		}
 
 		template<typename T>
-			requires HasValueType<T>
+			requires FixedSizeSequence<T>
 		[[nodiscard]] T Read()
 		{
-			return ReadImpl<T>(std::make_index_sequence<sizeof(T) / sizeof(typename T::value_type)>{});
+			return ReadImpl<T>(std::make_index_sequence<SequenceLength<T>()>{});
 		}
 
 		template<typename T>
@@ -87,7 +87,15 @@ namespace binaryio
 		void Skip()
 			requires requires { Read<T>(); }
 		{
-			Seek(sizeof(T), std::ios::cur);
+			if constexpr (FixedSizeSequence<T>)
+			{
+				for (size_t i = 0; i < SequenceLength<T>(); ++i)
+					Skip<SequenceElement<T>>();
+			}
+			else
+			{
+				Seek(sizeof(T), std::ios::cur);
+			}
 		}
 
 		void Seek(size_t offset)
@@ -202,10 +210,20 @@ namespace binaryio
 
 	private:
 		template<typename T, size_t... Is>
-			requires HasValueType<T>
+			requires FixedSizeSequence<T>
 		[[nodiscard]] T ReadImpl(std::index_sequence<Is...>)
 		{
-			return { (static_cast<void>(Is), Read<typename T::value_type>())... };
+			return { (static_cast<void>(Is), Read<SequenceElement<T>>())... };
+		}
+
+		template<typename T>
+			requires FixedSizeSequence<T>
+		[[nodiscard]] consteval static size_t SequenceLength()
+		{
+			if constexpr (TupleSized<T>)
+				return std::tuple_size_v<T>;
+			else
+				return static_cast<size_t>(T::length());
 		}
 
 		template<typename T>
