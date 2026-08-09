@@ -20,7 +20,7 @@ namespace binaryio
 	class BinaryReader
 	{
 	public:
-		BinaryReader(std::span<uint8_t> buffer, std::endian endian = std::endian::native)
+		BinaryReader(std::span<uint8_t> buffer, std::endian endian = std::endian::native) noexcept
 			: m_buffer(buffer), m_endian(endian) {}
 
 		template<typename T>
@@ -156,37 +156,37 @@ namespace binaryio
 			}
 		}
 
-		[[nodiscard]] std::span<uint8_t> GetBuffer() const
+		[[nodiscard]] std::span<uint8_t> GetBuffer() const noexcept
 		{
 			return m_buffer;
 		}
 
-		[[nodiscard]] std::endian GetEndian() const
+		[[nodiscard]] std::endian GetEndian() const noexcept
 		{
 			return m_endian;
 		}
 
-		void SetEndian(std::endian endian)
+		void SetEndian(std::endian endian) noexcept
 		{
 			m_endian = endian;
 		}
 
-		void SwapEndian()
+		void SwapEndian() noexcept
 		{
 			m_endian = (m_endian == std::endian::little) ? std::endian::big : std::endian::little;
 		}
 
-		void Set64BitMode(bool in64BitMode)
+		void Set64BitMode(bool in64BitMode) noexcept
 		{
 			m_64BitMode = in64BitMode;
 		}
 
-		[[nodiscard]] size_t GetOffset() const
+		[[nodiscard]] size_t GetOffset() const noexcept
 		{
 			return m_offset;
 		}
 
-		void StashOffset()
+		void StashOffset() noexcept
 		{
 			m_stashedOffset += m_offset;
 			m_offset = 0;
@@ -257,7 +257,7 @@ namespace binaryio
 
 		template<typename T>
 			requires FixedSizeSequence<T>
-		[[nodiscard]] consteval static size_t SequenceLength()
+		[[nodiscard]] consteval static size_t SequenceLength() noexcept
 		{
 			if constexpr (TupleSized<T>)
 				return std::tuple_size_v<T>;
@@ -283,12 +283,12 @@ namespace binaryio
 #endif
 		}
 
-		[[nodiscard]] size_t EffectiveOffset() const
+		[[nodiscard]] size_t EffectiveOffset() const noexcept
 		{
 			return m_stashedOffset + m_offset;
 		}
 
-		[[nodiscard]] bool IsInBounds(size_t offset, size_t size = 0) const
+		[[nodiscard]] bool IsInBounds(size_t offset, size_t size = 0) const noexcept
 		{
 			const auto available = m_buffer.size() - m_stashedOffset;
 			return offset <= available &&

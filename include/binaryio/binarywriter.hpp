@@ -209,12 +209,12 @@ namespace binaryio
 			return std::move(m_outStream);
 		}
 
-		[[nodiscard]] std::endian GetEndian() const
+		[[nodiscard]] std::endian GetEndian() const noexcept
 		{
 			return m_endian;
 		}
 
-		void SetEndian(std::endian endian)
+		void SetEndian(std::endian endian) noexcept
 		{
 			m_endian = endian;
 		}
